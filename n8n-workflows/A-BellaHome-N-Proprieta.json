@@ -1,0 +1,557 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "path": "bella-proprieta-list",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "49a9d4d4-6f7f-44f0-b6dd-3b905f9ef818",
+      "name": "Webhook Lista Proprieta",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        208,
+        80
+      ],
+      "webhookId": "850aadfa-d269-43ce-9bac-fa07307e79da"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
+      },
+      "id": "2cd57f8d-ed83-484d-a431-17ebdf01180e",
+      "name": "Verificar Auth Lista Proprieta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mh009jpegeb8pvl",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "3c83ac98-c602-4dbf-b659-cc0ba10e7988",
+      "name": "Leggi Proprieta",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        656,
+        80
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(i => i.json).filter(r => r.stato_annuncio !== 'Eliminata').map(r => {\n  r.proprietari_ids = r.proprietari_ids !== undefined && r.proprietari_ids !== null ? String(r.proprietari_ids) : '';\n  return { json: r };\n});"
+      },
+      "id": "d6414693-5f6a-4596-b625-66126c5089a6",
+      "name": "Filtra Proprieta Attive",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        80
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $input.all().map(i => i.json) }}",
+        "options": {}
+      },
+      "id": "89babc84-1f6f-41c0-9e54-8aa671d33912",
+      "name": "Rispondi Lista",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        1088,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bella-proprieta-create",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "9e45d1b4-8a1c-4cf8-ad79-ec87926382a7",
+      "name": "Webhook Crea Proprieta",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        208,
+        256
+      ],
+      "webhookId": "e4f97da7-b9b2-41de-af96-2cda6826a882"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
+      },
+      "id": "bb24686f-61ae-4685-9c76-97b1f5f3d011",
+      "name": "Verificar Auth Crea Proprieta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mh009jpegeb8pvl",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "e18d3963-09dc-4e37-a413-8d785cc00586",
+      "name": "Leggi Proprieta Esistenti",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        656,
+        256
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Webhook Crea Proprieta').first().json.body;\n\nconst existing = items.map(i => i.json.id).filter(v => typeof v === 'number');\nconst nextId = existing.length ? Math.max(...existing) + 1 : 1;\n\nconst anno = new Date().getFullYear();\nconst codiceAuto = 'BH-' + anno + '-' + String(nextId).padStart(3, '0');\nconst codice = (input.codice_proprieta && input.codice_proprieta.trim()) ? input.codice_proprieta.trim() : codiceAuto;\n\nreturn [{\n  json: {\n    id: nextId,\n    codice_proprieta: codice,\n    referencia_catastral: input.referencia_catastral || '',\n    titolo_indirizzo: input.titolo_indirizzo || '',\n    tipologia: input.tipologia || '',\n    camere_da_letto: input.camere_da_letto || 0,\n    bagni: input.bagni || 0,\n    superficie_m2: input.superficie_m2 || 0,\n    prezzo_richiesto: input.prezzo_richiesto || 0,\n    stato_annuncio: input.stato_annuncio || 'Disponibile',\n    proprietari_ids: input.proprietari_ids || '',\n    descrizione: input.descrizione || ''\n  }\n}];"
+      },
+      "id": "ffcc5460-a5d0-400b-b02d-969db39ef211",
+      "name": "Prepara Nuova Proprieta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "create",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mh009jpegeb8pvl",
+        "dataToSend": "autoMapInputData"
+      },
+      "id": "64b6b990-738a-4158-8f9f-ec1d94ee07da",
+      "name": "Scrivi Nuova Proprieta",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        1088,
+        256
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "9ccfff56-9872-47bd-b07a-3a6e9f6ad4d6",
+      "name": "Rispondi Creazione",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        1312,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bella-proprieta-update",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "c441929b-fc0b-4804-951a-9429c26f81d2",
+      "name": "Webhook Aggiorna Proprieta",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        208,
+        432
+      ],
+      "webhookId": "0f64ba14-b807-4d8d-82a9-b6dcb0bb109d"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
+      },
+      "id": "61c83990-a66d-47a3-b3ce-69def79d6e75",
+      "name": "Verificar Auth Aggiorna Proprieta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Webhook Aggiorna Proprieta').first().json.body;\n\nconst row = { id: Number(input.id) };\nif (input.titolo_indirizzo !== undefined) row.titolo_indirizzo = input.titolo_indirizzo;\nif (input.referencia_catastral !== undefined) row.referencia_catastral = input.referencia_catastral;\nif (input.tipologia !== undefined) row.tipologia = input.tipologia;\nif (input.camere_da_letto !== undefined) row.camere_da_letto = Number(input.camere_da_letto) || 0;\nif (input.bagni !== undefined) row.bagni = Number(input.bagni) || 0;\nif (input.superficie_m2 !== undefined) row.superficie_m2 = Number(input.superficie_m2) || 0;\nif (input.prezzo_richiesto !== undefined) row.prezzo_richiesto = Number(input.prezzo_richiesto) || 0;\nif (input.stato_annuncio !== undefined) row.stato_annuncio = input.stato_annuncio;\nif (input.descrizione !== undefined) row.descrizione = input.descrizione;\nif (input.proprietari_ids !== undefined) row.proprietari_ids = input.proprietari_ids;\n\nreturn [{ json: row }];"
+      },
+      "id": "eb9df1fc-5242-496b-9484-42e45f910400",
+      "name": "Prepara Aggiornamento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "update",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mh009jpegeb8pvl",
+        "dataToSend": "autoMapInputData"
+      },
+      "id": "fdac7b5b-2303-4941-8d04-87a25933605e",
+      "name": "Aggiorna Proprieta",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        880,
+        432
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "a724428b-2317-438c-889b-81fa45af5d5e",
+      "name": "Rispondi Aggiornamento",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        1088,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bella-proprieta-delete",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "de49df74-7a96-4a1a-8c75-a707083dec98",
+      "name": "Webhook Elimina Proprieta",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        208,
+        624
+      ],
+      "webhookId": "2d37f7c5-7207-47ed-af11-219169578021"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
+      },
+      "id": "d8a5221b-e72c-46aa-b605-48b213214dc8",
+      "name": "Verificar Auth Elimina Proprieta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        624
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Webhook Elimina Proprieta').first().json.body;\nreturn [{ json: { id: Number(input.id), stato_annuncio: 'Eliminata' } }];"
+      },
+      "id": "f7d321a2-069f-4dbb-8248-3ac10a3bb2fa",
+      "name": "Prepara Eliminazione Proprieta",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        624
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "update",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mh009jpegeb8pvl",
+        "dataToSend": "autoMapInputData"
+      },
+      "id": "6f112a56-7c74-4201-8afb-21df7486a8a7",
+      "name": "Marca Proprieta Eliminata",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        880,
+        624
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true } }}",
+        "options": {}
+      },
+      "id": "0d2cef3b-d342-4b84-860d-290d06d510f1",
+      "name": "Rispondi Eliminazione Proprieta",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        1088,
+        624
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Lista Proprieta": {
+      "main": [
+        [
+          {
+            "node": "Verificar Auth Lista Proprieta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Auth Lista Proprieta": {
+      "main": [
+        [
+          {
+            "node": "Leggi Proprieta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leggi Proprieta": {
+      "main": [
+        [
+          {
+            "node": "Filtra Proprieta Attive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtra Proprieta Attive": {
+      "main": [
+        [
+          {
+            "node": "Rispondi Lista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Crea Proprieta": {
+      "main": [
+        [
+          {
+            "node": "Verificar Auth Crea Proprieta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Auth Crea Proprieta": {
+      "main": [
+        [
+          {
+            "node": "Leggi Proprieta Esistenti",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leggi Proprieta Esistenti": {
+      "main": [
+        [
+          {
+            "node": "Prepara Nuova Proprieta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepara Nuova Proprieta": {
+      "main": [
+        [
+          {
+            "node": "Scrivi Nuova Proprieta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrivi Nuova Proprieta": {
+      "main": [
+        [
+          {
+            "node": "Rispondi Creazione",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Aggiorna Proprieta": {
+      "main": [
+        [
+          {
+            "node": "Verificar Auth Aggiorna Proprieta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Auth Aggiorna Proprieta": {
+      "main": [
+        [
+          {
+            "node": "Prepara Aggiornamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepara Aggiornamento": {
+      "main": [
+        [
+          {
+            "node": "Aggiorna Proprieta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggiorna Proprieta": {
+      "main": [
+        [
+          {
+            "node": "Rispondi Aggiornamento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Elimina Proprieta": {
+      "main": [
+        [
+          {
+            "node": "Verificar Auth Elimina Proprieta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Auth Elimina Proprieta": {
+      "main": [
+        [
+          {
+            "node": "Prepara Eliminazione Proprieta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepara Eliminazione Proprieta": {
+      "main": [
+        [
+          {
+            "node": "Marca Proprieta Eliminata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marca Proprieta Eliminata": {
+      "main": [
+        [
+          {
+            "node": "Rispondi Eliminazione Proprieta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "d991981e85276df5a3ff3ef1e964aff7c9cd7f950b50d4b301d088bd5278a0a4"
+  }
+}
