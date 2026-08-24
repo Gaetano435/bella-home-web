@@ -1,0 +1,604 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "path": "bella-pratiche-list",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "p001",
+      "name": "Webhook Lista Pratiche",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        112
+      ],
+      "webhookId": "p0011111-1111-1111-1111-111111111111"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
+      },
+      "id": "p002",
+      "name": "Verificar Auth Lista Pratiche",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mrq6ijxnn3z7673",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "p003",
+      "name": "Leggi Pratiche",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        400,
+        112
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mh009jpegeb8pvl",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "p003b",
+      "name": "Leggi Proprieta Join",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        560,
+        112
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mimqkvsak48uu5k",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "p003c",
+      "name": "Leggi Persone Join",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        720,
+        112
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const pratiche = $('Leggi Pratiche').all().map(i => i.json);\nconst proprieta = $('Leggi Proprieta Join').all().map(i => i.json);\nconst persone = $('Leggi Persone Join').all().map(i => i.json);\n\nfunction parseIds(val) {\n  if (val === null || val === undefined || val === '') return [];\n  if (Array.isArray(val)) return val.map(Number).filter(n => !isNaN(n));\n  let s = String(val).trim();\n  if (s.startsWith('[') && s.endsWith(']')) {\n    try {\n      const arr = JSON.parse(s);\n      return (Array.isArray(arr) ? arr : [arr]).map(Number).filter(n => !isNaN(n));\n    } catch(e) {}\n  }\n  return s.split(',').map(x => x.trim()).filter(Boolean).map(Number).filter(n => !isNaN(n));\n}\n\nfunction nomiDaIds(val) {\n  return parseIds(val).map(id => {\n    const p = persone.find(x => x.id === id);\n    return p ? p.nome_cognome : null;\n  }).filter(Boolean);\n}\n\nconst result = pratiche.map(p => {\n  const prop = proprieta.find(x => x.id === p.proprieta_id);\n  const venditoriNomi = nomiDaIds(p.venditori_ids);\n  const acquirentiNomi = nomiDaIds(p.acquirenti_ids);\n  return {\n    ...p,\n    proprieta_titolo: prop ? prop.titolo_indirizzo : '(non trovata)',\n    codice_proprieta: prop ? (prop.codice_proprieta || '') : '',\n    venditori_nomi: venditoriNomi.join(', '),\n    acquirenti_nomi: acquirentiNomi.join(', '),\n    venditore_nome: venditoriNomi[0] || '(non trovato)',\n    acquirente_nome: acquirentiNomi[0] || '(non trovato)'\n  };\n});\n\nreturn result.map(r => ({ json: r }));"
+      },
+      "id": "p003d",
+      "name": "Arricchisci Pratiche",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $input.all().map(i => i.json) }}",
+        "options": {}
+      },
+      "id": "p004",
+      "name": "Rispondi Lista Pratiche",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        1104,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bella-pratiche-create",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "p010",
+      "name": "Webhook Crea Pratica",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        304
+      ],
+      "webhookId": "p0101010-1010-1010-1010-101010101010"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
+      },
+      "id": "p011",
+      "name": "Verificar Auth Crea Pratica",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mrq6ijxnn3z7673",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "p012",
+      "name": "Leggi Pratiche Esistenti",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        400,
+        304
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Webhook Crea Pratica').first().json.body;\nconst existing = items.map(i => i.json.id).filter(v => typeof v === 'number');\nconst nextId = existing.length ? Math.max(...existing) + 1 : 1;\nconst pin = input.pin_acceso || String(Math.floor(100000 + Math.random()*900000));\nconst out = { id: nextId, pin_acceso: pin };\nout.venditori_ids = input.venditori_ids !== undefined ? input.venditori_ids : (input.venditore_id !== undefined ? input.venditore_id : '');\nout.acquirenti_ids = input.acquirenti_ids !== undefined ? input.acquirenti_ids : (input.acquirente_id !== undefined ? input.acquirente_id : '');\nout.notaio_contatti = input.notaio_contatti !== undefined ? input.notaio_contatti : (input.notaio_contatto !== undefined ? input.notaio_contatto : '');\nout.proprieta_id = (input.proprieta_id !== undefined && input.proprieta_id !== '') ? Number(input.proprieta_id) : null;\nout.stato = input.stato !== undefined ? input.stato : '';\nout.data_apertura = input.data_apertura || null;\nout.cartella_id = input.cartella_id !== undefined ? input.cartella_id : '';\nout.cartella_venditore_id = input.cartella_venditore_id !== undefined ? input.cartella_venditore_id : '';\nout.cartella_acquirente_id = input.cartella_acquirente_id !== undefined ? input.cartella_acquirente_id : '';\nout.cartella_nome = input.cartella_nome !== undefined ? input.cartella_nome : '';\nout.notaio_nome = input.notaio_nome !== undefined ? input.notaio_nome : '';\nout.data_firma = input.data_firma || null;\nout.note_persone = input.note_persone !== undefined ? input.note_persone : '';\nout.personas_agencia = input.personas_agencia !== undefined ? input.personas_agencia : '';\nout.personas_venditore = input.personas_venditore !== undefined ? input.personas_venditore : '';\nout.personas_comprador = input.personas_comprador !== undefined ? input.personas_comprador : '';\nout.personas_notario = input.personas_notario !== undefined ? input.personas_notario : '';\nout.personas_extra_json = input.personas_extra_json !== undefined ? input.personas_extra_json : '';\nout.offerta_importo = (input.offerta_importo !== undefined && input.offerta_importo !== '') ? Number(input.offerta_importo) : null;\nout.fecha_aceptacion = input.fecha_aceptacion || null;\nout.pct_arras = (input.pct_arras !== undefined && input.pct_arras !== '') ? Number(input.pct_arras) : null;\nout.importe_reserva = (input.importe_reserva !== undefined && input.importe_reserva !== '') ? Number(input.importe_reserva) : null;\nout.reserva_destinatario = input.reserva_destinatario !== undefined ? input.reserva_destinatario : '';\nout.reserva_fecha_deposito = input.reserva_fecha_deposito || null;\nout.reserva_contrato_file = input.reserva_contrato_file !== undefined ? input.reserva_contrato_file : '';\nout.reserva_comprobante_file = input.reserva_comprobante_file !== undefined ? input.reserva_comprobante_file : '';\nout.nota_reserva = input.nota_reserva !== undefined ? input.nota_reserva : '';\nout.sin_reserva = input.sin_reserva !== undefined ? input.sin_reserva : '';\nout.arras_destinatario = input.arras_destinatario !== undefined ? input.arras_destinatario : '';\nout.arras_fecha_firma = input.arras_fecha_firma || null;\nout.arras_fecha_deposito = input.arras_fecha_deposito || null;\nout.arras_contrato_file = input.arras_contrato_file !== undefined ? input.arras_contrato_file : '';\nout.arras_comprobante_file = input.arras_comprobante_file !== undefined ? input.arras_comprobante_file : '';\nout.nota_arras = input.nota_arras !== undefined ? input.nota_arras : '';\nout.traspaso_fecha = input.traspaso_fecha || null;\nout.traspaso_comprobante_file = input.traspaso_comprobante_file !== undefined ? input.traspaso_comprobante_file : '';\nout.note_economiche = input.note_economiche !== undefined ? input.note_economiche : '';\nout.note_documenti_scadenza = input.note_documenti_scadenza !== undefined ? input.note_documenti_scadenza : '';\nout.riferimento_notarile = input.riferimento_notarile !== undefined ? input.riferimento_notarile : '';\nout.note_notarili = input.note_notarili !== undefined ? input.note_notarili : '';\nout.ibi_anual = (input.ibi_anual !== undefined && input.ibi_anual !== '') ? Number(input.ibi_anual) : null;\nout.ibi_fecha_firma = input.ibi_fecha_firma || null;\nout.retencion_no_residente = input.retencion_no_residente !== undefined ? input.retencion_no_residente : '';\nout.retencion_importe = (input.retencion_importe !== undefined && input.retencion_importe !== '') ? Number(input.retencion_importe) : null;\nout.comunidad_importe = (input.comunidad_importe !== undefined && input.comunidad_importe !== '') ? Number(input.comunidad_importe) : null;\nout.comunidad_asume = input.comunidad_asume !== undefined ? input.comunidad_asume : '';\nout.gestoria_importe = (input.gestoria_importe !== undefined && input.gestoria_importe !== '') ? Number(input.gestoria_importe) : null;\nout.gestoria_asume = input.gestoria_asume !== undefined ? input.gestoria_asume : '';\nreturn [{ json: out }];"
+      },
+      "id": "p013",
+      "name": "Prepara Nuova Pratica",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "create",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mrq6ijxnn3z7673",
+        "dataToSend": "autoMapInputData"
+      },
+      "id": "p014",
+      "name": "Scrivi Nuova Pratica",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        848,
+        304
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "p015",
+      "name": "Rispondi Creazione Pratica",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        1072,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bella-pratiche-update",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "p020",
+      "name": "Webhook Aggiorna Pratica",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        480
+      ],
+      "webhookId": "p0202020-2020-2020-2020-202020202020"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
+      },
+      "id": "p021",
+      "name": "Verificar Auth Aggiorna Pratica",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Webhook Aggiorna Pratica').first().json.body;\nconst out = { id: Number(input.id) };\nif (input.venditori_ids !== undefined) out.venditori_ids = input.venditori_ids; else if (input.venditore_id !== undefined) out.venditori_ids = input.venditore_id;\nif (input.acquirenti_ids !== undefined) out.acquirenti_ids = input.acquirenti_ids; else if (input.acquirente_id !== undefined) out.acquirenti_ids = input.acquirente_id;\nif (input.notaio_contatti !== undefined) out.notaio_contatti = input.notaio_contatti; else if (input.notaio_contatto !== undefined) out.notaio_contatti = input.notaio_contatto;\nif (input.proprieta_id !== undefined) out.proprieta_id = (input.proprieta_id === '') ? null : Number(input.proprieta_id);\nif (input.stato !== undefined) out.stato = input.stato;\nif (input.data_apertura !== undefined) out.data_apertura = input.data_apertura;\nif (input.cartella_id !== undefined) out.cartella_id = input.cartella_id;\nif (input.cartella_venditore_id !== undefined) out.cartella_venditore_id = input.cartella_venditore_id;\nif (input.cartella_acquirente_id !== undefined) out.cartella_acquirente_id = input.cartella_acquirente_id;\nif (input.cartella_nome !== undefined) out.cartella_nome = input.cartella_nome;\nif (input.notaio_nome !== undefined) out.notaio_nome = input.notaio_nome;\nif (input.data_firma !== undefined) out.data_firma = input.data_firma;\nif (input.note_persone !== undefined) out.note_persone = input.note_persone;\nif (input.personas_agencia !== undefined) out.personas_agencia = input.personas_agencia;\nif (input.personas_venditore !== undefined) out.personas_venditore = input.personas_venditore;\nif (input.personas_comprador !== undefined) out.personas_comprador = input.personas_comprador;\nif (input.personas_notario !== undefined) out.personas_notario = input.personas_notario;\nif (input.personas_extra_json !== undefined) out.personas_extra_json = input.personas_extra_json;\nif (input.offerta_importo !== undefined) out.offerta_importo = (input.offerta_importo === '') ? null : Number(input.offerta_importo);\nif (input.fecha_aceptacion !== undefined) out.fecha_aceptacion = input.fecha_aceptacion;\nif (input.pct_arras !== undefined) out.pct_arras = (input.pct_arras === '') ? null : Number(input.pct_arras);\nif (input.importe_reserva !== undefined) out.importe_reserva = (input.importe_reserva === '') ? null : Number(input.importe_reserva);\nif (input.reserva_destinatario !== undefined) out.reserva_destinatario = input.reserva_destinatario;\nif (input.reserva_fecha_deposito !== undefined) out.reserva_fecha_deposito = input.reserva_fecha_deposito;\nif (input.reserva_contrato_file !== undefined) out.reserva_contrato_file = input.reserva_contrato_file;\nif (input.reserva_comprobante_file !== undefined) out.reserva_comprobante_file = input.reserva_comprobante_file;\nif (input.nota_reserva !== undefined) out.nota_reserva = input.nota_reserva;\nif (input.sin_reserva !== undefined) out.sin_reserva = input.sin_reserva;\nif (input.arras_destinatario !== undefined) out.arras_destinatario = input.arras_destinatario;\nif (input.arras_fecha_firma !== undefined) out.arras_fecha_firma = input.arras_fecha_firma;\nif (input.arras_fecha_deposito !== undefined) out.arras_fecha_deposito = input.arras_fecha_deposito;\nif (input.arras_contrato_file !== undefined) out.arras_contrato_file = input.arras_contrato_file;\nif (input.arras_comprobante_file !== undefined) out.arras_comprobante_file = input.arras_comprobante_file;\nif (input.nota_arras !== undefined) out.nota_arras = input.nota_arras;\nif (input.traspaso_fecha !== undefined) out.traspaso_fecha = input.traspaso_fecha;\nif (input.traspaso_comprobante_file !== undefined) out.traspaso_comprobante_file = input.traspaso_comprobante_file;\nif (input.note_economiche !== undefined) out.note_economiche = input.note_economiche;\nif (input.note_documenti_scadenza !== undefined) out.note_documenti_scadenza = input.note_documenti_scadenza;\nif (input.riferimento_notarile !== undefined) out.riferimento_notarile = input.riferimento_notarile;\nif (input.note_notarili !== undefined) out.note_notarili = input.note_notarili;\nif (input.ibi_anual !== undefined) out.ibi_anual = (input.ibi_anual === '') ? null : Number(input.ibi_anual);\nif (input.ibi_fecha_firma !== undefined) out.ibi_fecha_firma = input.ibi_fecha_firma;\nif (input.retencion_no_residente !== undefined) out.retencion_no_residente = input.retencion_no_residente;\nif (input.retencion_importe !== undefined) out.retencion_importe = (input.retencion_importe === '') ? null : Number(input.retencion_importe);\nif (input.comunidad_importe !== undefined) out.comunidad_importe = (input.comunidad_importe === '') ? null : Number(input.comunidad_importe);\nif (input.comunidad_asume !== undefined) out.comunidad_asume = input.comunidad_asume;\nif (input.gestoria_importe !== undefined) out.gestoria_importe = (input.gestoria_importe === '') ? null : Number(input.gestoria_importe);\nif (input.gestoria_asume !== undefined) out.gestoria_asume = input.gestoria_asume;\nif (input.pin_acceso !== undefined) out.pin_acceso = input.pin_acceso;\nreturn [{ json: out }];"
+      },
+      "id": "p022",
+      "name": "Prepara Aggiornamento Pratica",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "update",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mrq6ijxnn3z7673",
+        "dataToSend": "autoMapInputData"
+      },
+      "id": "p023",
+      "name": "Aggiorna Pratica",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        624,
+        480
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "p024",
+      "name": "Rispondi Aggiornamento Pratica",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        848,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bella-pratiche-delete",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "p030",
+      "name": "Webhook Elimina Pratica",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        656
+      ],
+      "webhookId": "p0303030-3030-3030-3030-303030303030"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
+      },
+      "id": "p031",
+      "name": "Verificar Auth Elimina Pratica",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "deleteRecord",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mrq6ijxnn3z7673",
+        "id": "={{ $json.body.id }}"
+      },
+      "id": "p032",
+      "name": "Elimina Pratica",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        400,
+        656
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"eliminata\": true } }}",
+        "options": {}
+      },
+      "id": "p033",
+      "name": "Rispondi Eliminazione Pratica",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        624,
+        656
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Lista Pratiche": {
+      "main": [
+        [
+          {
+            "node": "Verificar Auth Lista Pratiche",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Auth Lista Pratiche": {
+      "main": [
+        [
+          {
+            "node": "Leggi Pratiche",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leggi Pratiche": {
+      "main": [
+        [
+          {
+            "node": "Leggi Proprieta Join",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leggi Proprieta Join": {
+      "main": [
+        [
+          {
+            "node": "Leggi Persone Join",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leggi Persone Join": {
+      "main": [
+        [
+          {
+            "node": "Arricchisci Pratiche",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Arricchisci Pratiche": {
+      "main": [
+        [
+          {
+            "node": "Rispondi Lista Pratiche",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Crea Pratica": {
+      "main": [
+        [
+          {
+            "node": "Verificar Auth Crea Pratica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Auth Crea Pratica": {
+      "main": [
+        [
+          {
+            "node": "Leggi Pratiche Esistenti",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leggi Pratiche Esistenti": {
+      "main": [
+        [
+          {
+            "node": "Prepara Nuova Pratica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepara Nuova Pratica": {
+      "main": [
+        [
+          {
+            "node": "Scrivi Nuova Pratica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrivi Nuova Pratica": {
+      "main": [
+        [
+          {
+            "node": "Rispondi Creazione Pratica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Aggiorna Pratica": {
+      "main": [
+        [
+          {
+            "node": "Verificar Auth Aggiorna Pratica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Auth Aggiorna Pratica": {
+      "main": [
+        [
+          {
+            "node": "Prepara Aggiornamento Pratica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepara Aggiornamento Pratica": {
+      "main": [
+        [
+          {
+            "node": "Aggiorna Pratica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggiorna Pratica": {
+      "main": [
+        [
+          {
+            "node": "Rispondi Aggiornamento Pratica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Elimina Pratica": {
+      "main": [
+        [
+          {
+            "node": "Verificar Auth Elimina Pratica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Auth Elimina Pratica": {
+      "main": [
+        [
+          {
+            "node": "Elimina Pratica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Elimina Pratica": {
+      "main": [
+        [
+          {
+            "node": "Rispondi Eliminazione Pratica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "d991981e85276df5a3ff3ef1e964aff7c9cd7f950b50d4b301d088bd5278a0a4"
+  }
+}
