@@ -2,28 +2,28 @@
   "nodes": [
     {
       "parameters": {
-        "path": "bella-clienti-list",
+        "path": "bella-checklist-list",
         "responseMode": "responseNode",
         "options": {
           "allowedOrigins": "*"
         }
       },
-      "id": "769dd44c-2ea4-484e-85fe-3a71c6d70815",
-      "name": "Webhook Lista Clienti",
+      "id": "c001",
+      "name": "Webhook Lista Checklist",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
         -48,
         112
       ],
-      "webhookId": "c84cbc07-7683-48a0-a1f7-68735b1c8a06"
+      "webhookId": "c0011111-1111-1111-1111-111111111111"
     },
     {
       "parameters": {
         "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
       },
-      "id": "eb9b7458-0214-4369-b079-1845f1c45880",
-      "name": "Verificar Auth Lista Clienti",
+      "id": "c002",
+      "name": "Verificar Auth Lista Checklist",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -36,12 +36,12 @@
         "authentication": "nocoDbApiToken",
         "operation": "getAll",
         "projectId": "pduf3mguz7mlqwu",
-        "table": "mcjn3aagtj5mfxo",
+        "table": "maytiwq9zvps5qf",
         "returnAll": true,
         "options": {}
       },
-      "id": "14c37e32-541a-484a-9f5c-afc529860e65",
-      "name": "Leggi Clienti",
+      "id": "c003",
+      "name": "Leggi Checklist",
       "type": "n8n-nodes-base.nocoDb",
       "typeVersion": 3,
       "position": [
@@ -58,16 +58,17 @@
     },
     {
       "parameters": {
-        "jsCode": "return items.map(i => i.json).filter(r => r.stato !== 'Eliminata').map(r => ({ json: r }));"
+        "jsCode": "const q = $('Webhook Lista Checklist').first().json.query || {};\nconst praticaId = q.pratica_id;\nlet rows = items.map(i => i.json);\nif (praticaId !== undefined) rows = rows.filter(r => String(r.pratica_id) === String(praticaId));\nreturn rows.map(r => ({ json: r }));"
       },
-      "id": "302827bf-aa6e-400b-bca9-2aa34d24442f",
-      "name": "Filtra Clienti Attivi",
+      "id": "c004",
+      "name": "Filtra Per Pratica",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         624,
         112
-      ]
+      ],
+      "alwaysOutputData": true
     },
     {
       "parameters": {
@@ -75,40 +76,40 @@
         "responseBody": "={{ $input.all().map(i => i.json) }}",
         "options": {}
       },
-      "id": "3b2778a3-883d-4eda-9b20-52bfd46e9a9c",
-      "name": "Rispondi Lista",
+      "id": "c005",
+      "name": "Rispondi Lista Checklist",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.2,
       "position": [
-        832,
+        848,
         112
       ]
     },
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "bella-clienti-create",
+        "path": "bella-checklist-add",
         "responseMode": "responseNode",
         "options": {
           "allowedOrigins": "*"
         }
       },
-      "id": "539a8115-b46f-4bba-af1b-edb2b812922b",
-      "name": "Webhook Crea Cliente",
+      "id": "c010",
+      "name": "Webhook Aggiungi Checklist",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
         -48,
         304
       ],
-      "webhookId": "b59289a7-9296-494c-a64b-29f08fa6523b"
+      "webhookId": "c0101010-1010-1010-1010-101010101010"
     },
     {
       "parameters": {
         "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
       },
-      "id": "c3278997-ecbe-4788-b31e-742e927b67d2",
-      "name": "Verificar Auth Crea Cliente",
+      "id": "c011",
+      "name": "Verificar Auth Aggiungi Checklist",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -121,12 +122,12 @@
         "authentication": "nocoDbApiToken",
         "operation": "getAll",
         "projectId": "pduf3mguz7mlqwu",
-        "table": "mcjn3aagtj5mfxo",
+        "table": "maytiwq9zvps5qf",
         "returnAll": true,
         "options": {}
       },
-      "id": "3312db69-86e5-49ba-b12c-a4811bc3b28a",
-      "name": "Leggi Clienti Esistenti",
+      "id": "c012",
+      "name": "Leggi Checklist Esistenti",
       "type": "n8n-nodes-base.nocoDb",
       "typeVersion": 3,
       "position": [
@@ -143,10 +144,10 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $('Webhook Crea Cliente').first().json.body;\n\nconst existing = items.map(i => i.json.id).filter(v => typeof v === 'number');\nconst nextId = existing.length ? Math.max(...existing) + 1 : 1;\n\nconst token = 'tok-' + Math.random().toString(36).slice(2, 10);\n\nreturn [{\n  json: {\n    id: nextId,\n    nome_cognome: input.nome_cognome || '',\n    ruolo: input.ruolo || '',\n    telefono: input.telefono || '',\n    email: input.email || '',\n    lingua: input.lingua || 'ES',\n    telegram_chat_id: '',\n    token_accesso_portale: token\n  }\n}];"
+        "jsCode": "const input = $('Webhook Aggiungi Checklist').first().json.body;\nconst existing = items.map(i => i.json.id).filter(v => typeof v === 'number');\nconst nextId = existing.length ? Math.max(...existing) + 1 : 1;\nreturn [{ json: {\n  id: nextId,\n  pratica_id: input.pratica_id !== undefined ? Number(input.pratica_id) : null,\n  nome_punto: input.nome_punto || '',\n  nota: input.nota || '',\n  per_chi: input.per_chi || '',\n  descrizione: input.descrizione || '',\n  stato: 'Mancante',\n  file_link: '',\n  origine: input.origine || 'Manual'\n} }];"
       },
-      "id": "00263ddb-bd4f-4cf6-9102-5771d50b4dbf",
-      "name": "Prepara Nuovo Cliente",
+      "id": "c013",
+      "name": "Prepara Nuova Voce",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -159,15 +160,15 @@
         "authentication": "nocoDbApiToken",
         "operation": "create",
         "projectId": "pduf3mguz7mlqwu",
-        "table": "mcjn3aagtj5mfxo",
+        "table": "maytiwq9zvps5qf",
         "dataToSend": "autoMapInputData"
       },
-      "id": "34bfbea3-1b35-411f-b00c-988fd3250f59",
-      "name": "Scrivi Nuovo Cliente",
+      "id": "c014",
+      "name": "Scrivi Nuova Voce",
       "type": "n8n-nodes-base.nocoDb",
       "typeVersion": 3,
       "position": [
-        832,
+        848,
         304
       ],
       "credentials": {
@@ -183,143 +184,45 @@
         "respondWith": "allIncomingItems",
         "options": {}
       },
-      "id": "e94790e2-0a71-497b-9869-f1e03862962c",
-      "name": "Rispondi Creazione",
+      "id": "c015",
+      "name": "Rispondi Aggiunta Checklist",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.2,
       "position": [
-        1056,
+        1072,
         304
       ]
     },
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "bella-clienti-update",
+        "path": "bella-checklist-elimina-voce",
         "responseMode": "responseNode",
         "options": {
           "allowedOrigins": "*"
         }
       },
-      "id": "5af351ef-7c99-492a-ac80-a15a9b418b9e",
-      "name": "Webhook Aggiorna Cliente",
+      "id": "c020",
+      "name": "Webhook Elimina Voce",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
         -48,
         480
       ],
-      "webhookId": "e2ca6b15-ed69-429c-9cd5-a782b30a46cb"
+      "webhookId": "c0202020-2020-2020-2020-202020202020"
     },
     {
       "parameters": {
         "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
       },
-      "id": "f0ea77cf-7441-42d8-84b3-d7998d194ba8",
-      "name": "Verificar Auth Aggiorna Cliente",
+      "id": "c021",
+      "name": "Verificar Auth Elimina Voce",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         176,
         480
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const input = $('Webhook Aggiorna Cliente').first().json.body;\nreturn [{ json: {\n  id: Number(input.id),\n  nome_cognome: input.nome_cognome,\n  ruolo: input.ruolo,\n  telefono: input.telefono,\n  email: input.email,\n  lingua: input.lingua\n} }];"
-      },
-      "id": "d037f803-0f5d-48bd-96f2-edf2b2c7ec58",
-      "name": "Prepara Aggiornamento",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        400,
-        480
-      ]
-    },
-    {
-      "parameters": {
-        "authentication": "nocoDbApiToken",
-        "operation": "update",
-        "projectId": "pduf3mguz7mlqwu",
-        "table": "mcjn3aagtj5mfxo",
-        "dataToSend": "autoMapInputData"
-      },
-      "id": "ec929cb3-e06a-4e75-8e72-86d4710e4c37",
-      "name": "Aggiorna Cliente",
-      "type": "n8n-nodes-base.nocoDb",
-      "typeVersion": 3,
-      "position": [
-        624,
-        480
-      ],
-      "credentials": {
-        "nocoDbApiToken": {
-          "id": "Bf3buqD3Mhxjasqc",
-          "name": "NocoDB Token account"
-        }
-      },
-      "alwaysOutputData": true
-    },
-    {
-      "parameters": {
-        "respondWith": "allIncomingItems",
-        "options": {}
-      },
-      "id": "c2317b59-a9d6-4d77-9e81-dd86efca986e",
-      "name": "Rispondi Aggiornamento",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.2,
-      "position": [
-        832,
-        480
-      ]
-    },
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "bella-clienti-delete",
-        "responseMode": "responseNode",
-        "options": {
-          "allowedOrigins": "*"
-        }
-      },
-      "id": "ac473256-704f-441a-95f7-8fce1c437875",
-      "name": "Webhook Elimina Cliente",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [
-        -48,
-        656
-      ],
-      "webhookId": "394c6e65-9c62-46b2-81c6-fa99bd422189"
-    },
-    {
-      "parameters": {
-        "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
-      },
-      "id": "27989974-9057-4494-87ff-52e5e209f1b4",
-      "name": "Verificar Auth Elimina Cliente",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        176,
-        656
-      ]
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ { \"ok\": true } }}",
-        "options": {}
-      },
-      "id": "c9bdca83-4433-4043-8082-6cbaa71ae9f8",
-      "name": "Rispondi Eliminazione Cliente",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.2,
-      "position": [
-        1056,
-        656
       ]
     },
     {
@@ -327,197 +230,296 @@
         "authentication": "nocoDbApiToken",
         "operation": "deleteRecord",
         "projectId": "pduf3mguz7mlqwu",
-        "table": "mcjn3aagtj5mfxo",
-        "id": "={{ $json.body.id }}"
+        "table": "maytiwq9zvps5qf",
+        "id": "={{ $json.body.checklist_id }}"
       },
-      "id": "elim-pers-hard-001",
-      "name": "Elimina Cliente",
+      "id": "c022",
+      "name": "Elimina Voce",
       "type": "n8n-nodes-base.nocoDb",
       "typeVersion": 3,
       "position": [
         400,
-        656
+        480
       ],
-      "alwaysOutputData": true,
       "credentials": {
         "nocoDbApiToken": {
           "id": "Bf3buqD3Mhxjasqc",
           "name": "NocoDB Token account"
         }
-      }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true } }}",
+        "options": {}
+      },
+      "id": "c023",
+      "name": "Rispondi Elimina Voce",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        624,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bella-elimina-documento",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "c030",
+      "name": "Webhook Elimina Documento",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        656
+      ],
+      "webhookId": "c0303030-3030-3030-3030-303030303030"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
+      },
+      "id": "c031",
+      "name": "Verificar Auth Elimina Documento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Webhook Elimina Documento').first().json.body;\nreturn [{ json: { id: Number(input.checklist_id), file_link: '', stato: 'Mancante' } }];"
+      },
+      "id": "c032",
+      "name": "Prepara Rimozione File",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        656
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "update",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "maytiwq9zvps5qf",
+        "dataToSend": "autoMapInputData"
+      },
+      "id": "c033",
+      "name": "Aggiorna Rimozione File",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        624,
+        656
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true } }}",
+        "options": {}
+      },
+      "id": "c034",
+      "name": "Rispondi Elimina Documento",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        848,
+        656
+      ]
     }
   ],
   "connections": {
-    "Webhook Lista Clienti": {
+    "Webhook Lista Checklist": {
       "main": [
         [
           {
-            "node": "Verificar Auth Lista Clienti",
+            "node": "Verificar Auth Lista Checklist",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Verificar Auth Lista Clienti": {
+    "Verificar Auth Lista Checklist": {
       "main": [
         [
           {
-            "node": "Leggi Clienti",
+            "node": "Leggi Checklist",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Leggi Clienti": {
+    "Leggi Checklist": {
       "main": [
         [
           {
-            "node": "Filtra Clienti Attivi",
+            "node": "Filtra Per Pratica",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Filtra Clienti Attivi": {
+    "Filtra Per Pratica": {
       "main": [
         [
           {
-            "node": "Rispondi Lista",
+            "node": "Rispondi Lista Checklist",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Webhook Crea Cliente": {
+    "Webhook Aggiungi Checklist": {
       "main": [
         [
           {
-            "node": "Verificar Auth Crea Cliente",
+            "node": "Verificar Auth Aggiungi Checklist",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Verificar Auth Crea Cliente": {
+    "Verificar Auth Aggiungi Checklist": {
       "main": [
         [
           {
-            "node": "Leggi Clienti Esistenti",
+            "node": "Leggi Checklist Esistenti",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Leggi Clienti Esistenti": {
+    "Leggi Checklist Esistenti": {
       "main": [
         [
           {
-            "node": "Prepara Nuovo Cliente",
+            "node": "Prepara Nuova Voce",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Prepara Nuovo Cliente": {
+    "Prepara Nuova Voce": {
       "main": [
         [
           {
-            "node": "Scrivi Nuovo Cliente",
+            "node": "Scrivi Nuova Voce",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Scrivi Nuovo Cliente": {
+    "Scrivi Nuova Voce": {
       "main": [
         [
           {
-            "node": "Rispondi Creazione",
+            "node": "Rispondi Aggiunta Checklist",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Webhook Aggiorna Cliente": {
+    "Webhook Elimina Voce": {
       "main": [
         [
           {
-            "node": "Verificar Auth Aggiorna Cliente",
+            "node": "Verificar Auth Elimina Voce",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Verificar Auth Aggiorna Cliente": {
+    "Verificar Auth Elimina Voce": {
       "main": [
         [
           {
-            "node": "Prepara Aggiornamento",
+            "node": "Elimina Voce",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Prepara Aggiornamento": {
+    "Elimina Voce": {
       "main": [
         [
           {
-            "node": "Aggiorna Cliente",
+            "node": "Rispondi Elimina Voce",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Aggiorna Cliente": {
+    "Webhook Elimina Documento": {
       "main": [
         [
           {
-            "node": "Rispondi Aggiornamento",
+            "node": "Verificar Auth Elimina Documento",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Webhook Elimina Cliente": {
+    "Verificar Auth Elimina Documento": {
       "main": [
         [
           {
-            "node": "Verificar Auth Elimina Cliente",
+            "node": "Prepara Rimozione File",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Verificar Auth Elimina Cliente": {
+    "Prepara Rimozione File": {
       "main": [
         [
           {
-            "node": "Elimina Cliente",
+            "node": "Aggiorna Rimozione File",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Elimina Cliente": {
+    "Aggiorna Rimozione File": {
       "main": [
         [
           {
-            "node": "Rispondi Eliminazione Cliente",
+            "node": "Rispondi Elimina Documento",
             "type": "main",
             "index": 0
           }

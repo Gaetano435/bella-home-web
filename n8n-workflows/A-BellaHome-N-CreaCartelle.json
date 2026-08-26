@@ -1,0 +1,290 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bella-pratiche-crea-cartelle",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "cc001",
+      "name": "Webhook Crea Cartelle",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "cc00111-1111-1111-1111-111111111111"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
+      },
+      "id": "cc002",
+      "name": "Verificar Auth Crea Cartelle",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "={{ $json.body.cartella_nome }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1yEEs_NqtthQ_R2DaiOMv168_l7N_TfAS",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "cc003",
+      "name": "Crea Cartella Pratica",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        448,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "iQA81XBNPFdrmMKs",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "Documentos Vendedor",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "cc004",
+      "name": "Crea Sottocartella Venditore",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        672,
+        200
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "iQA81XBNPFdrmMKs",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "Documentos Comprador",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('Crea Cartella Pratica').first().json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "cc005",
+      "name": "Crea Sottocartella Acquirente",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        672,
+        400
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "iQA81XBNPFdrmMKs",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "cc006",
+      "name": "Unisci Sottocartelle",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        896,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Webhook Crea Cartelle').first().json.body;\nconst cartellaId = $('Crea Cartella Pratica').first().json.id;\nconst cartellaVenditoreId = $('Crea Sottocartella Venditore').first().json.id;\nconst cartellaAcquirenteId = $('Crea Sottocartella Acquirente').first().json.id;\nreturn [{ json: {\n  id: Number(input.id),\n  cartella_id: cartellaId,\n  cartella_venditore_id: cartellaVenditoreId,\n  cartella_acquirente_id: cartellaAcquirenteId,\n  cartella_nome: input.cartella_nome || ''\n} }];"
+      },
+      "id": "cc007",
+      "name": "Prepara Aggiornamento Cartelle",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "update",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "maqwpbytj08220t",
+        "dataToSend": "autoMapInputData"
+      },
+      "id": "cc008",
+      "name": "Aggiorna Pratica Con Cartelle",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        1344,
+        300
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "cc009",
+      "name": "Rispondi Crea Cartelle",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        1568,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Crea Cartelle": {
+      "main": [
+        [
+          {
+            "node": "Verificar Auth Crea Cartelle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Auth Crea Cartelle": {
+      "main": [
+        [
+          {
+            "node": "Crea Cartella Pratica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crea Cartella Pratica": {
+      "main": [
+        [
+          {
+            "node": "Crea Sottocartella Venditore",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Crea Sottocartella Acquirente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crea Sottocartella Venditore": {
+      "main": [
+        [
+          {
+            "node": "Unisci Sottocartelle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crea Sottocartella Acquirente": {
+      "main": [
+        [
+          {
+            "node": "Unisci Sottocartelle",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Unisci Sottocartelle": {
+      "main": [
+        [
+          {
+            "node": "Prepara Aggiornamento Cartelle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepara Aggiornamento Cartelle": {
+      "main": [
+        [
+          {
+            "node": "Aggiorna Pratica Con Cartelle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggiorna Pratica Con Cartelle": {
+      "main": [
+        [
+          {
+            "node": "Rispondi Crea Cartelle",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "d991981e85276df5a3ff3ef1e964aff7c9cd7f950b50d4b301d088bd5278a0a4"
+  }
+}

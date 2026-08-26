@@ -1,0 +1,280 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "path": "bella-timeline-datos",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "tl001",
+      "name": "Webhook Datos Timeline",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -720,
+        192
+      ],
+      "webhookId": "tl00111-1111-1111-1111-111111111111"
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "maqwpbytj08220t",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "tl002",
+      "name": "Leggi Pratiche Timeline",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        -496,
+        192
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const q = $('Webhook Datos Timeline').first().json.query || {};\nconst praticaId = Number(q.pratica_id);\nconst pin = q.pin;\n\nconst pratica = items.map(i => i.json).find(p => p.id === praticaId);\nif (!pratica) { throw new Error('No autorizado'); }\nif (!pratica.pin_acceso || String(pratica.pin_acceso) !== String(pin)) { throw new Error('No autorizado'); }\n\nreturn [{ json: pratica }];"
+      },
+      "id": "tl003",
+      "name": "Verificar Pin",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -272,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mfmynu6vl7zx5jv",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "tl004",
+      "name": "Leggi Proprieta Timeline",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        -48,
+        0
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mcjn3aagtj5mfxo",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "tl005",
+      "name": "Leggi Persone Timeline",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        -48,
+        192
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "maytiwq9zvps5qf",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "tl006",
+      "name": "Leggi Checklist Timeline",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        -48,
+        384
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "numberInputs": 3
+      },
+      "id": "tl007",
+      "name": "Unisci Letture Timeline",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        176,
+        176
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const p = $('Verificar Pin').first().json;\nconst proprieta = $('Leggi Proprieta Timeline').all().map(i => i.json);\nconst persone = $('Leggi Persone Timeline').all().map(i => i.json);\nconst checklist = $('Leggi Checklist Timeline').all().map(i => i.json).filter(c => String(c.pratica_id) === String(p.id));\n\nfunction nombresDe(val) {\n  if (val === null || val === undefined || val === '') return '';\n  const ids = String(val).split(/[,;]/).map(s => s.trim()).filter(Boolean);\n  const nombres = ids.map(id => {\n    const per = persone.find(x => String(x.id) === String(id));\n    return per ? per.nome_cognome : '(no encontrado)';\n  });\n  return nombres.join(', ');\n}\n\nconst prop = proprieta.find(x => String(x.id) === String(p.proprieta_id));\n\nconst praticaCompleta = Object.assign({}, p, {\n  codice_proprieta: prop ? prop.codice_proprieta : '',\n  proprieta_titolo: prop ? prop.titolo_indirizzo : '',\n  referencia_catastral: prop ? prop.referencia_catastral : '',\n  venditore_nome: nombresDe(p.venditori_ids) || '(non trovato)',\n  acquirente_nome: nombresDe(p.acquirenti_ids) || '(non trovato)'\n});\n\nreturn [{ json: { pratica: praticaCompleta, checklist: checklist } }];"
+      },
+      "id": "tl008",
+      "name": "Combinar Datos Timeline",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "tl009",
+      "name": "Rispondi Datos Timeline",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        624,
+        192
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Datos Timeline": {
+      "main": [
+        [
+          {
+            "node": "Leggi Pratiche Timeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leggi Pratiche Timeline": {
+      "main": [
+        [
+          {
+            "node": "Verificar Pin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Pin": {
+      "main": [
+        [
+          {
+            "node": "Leggi Proprieta Timeline",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Leggi Persone Timeline",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Leggi Checklist Timeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leggi Proprieta Timeline": {
+      "main": [
+        [
+          {
+            "node": "Unisci Letture Timeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leggi Persone Timeline": {
+      "main": [
+        [
+          {
+            "node": "Unisci Letture Timeline",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Leggi Checklist Timeline": {
+      "main": [
+        [
+          {
+            "node": "Unisci Letture Timeline",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Unisci Letture Timeline": {
+      "main": [
+        [
+          {
+            "node": "Combinar Datos Timeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combinar Datos Timeline": {
+      "main": [
+        [
+          {
+            "node": "Rispondi Datos Timeline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "d991981e85276df5a3ff3ef1e964aff7c9cd7f950b50d4b301d088bd5278a0a4"
+  }
+}

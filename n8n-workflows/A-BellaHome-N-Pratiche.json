@@ -36,7 +36,7 @@
         "authentication": "nocoDbApiToken",
         "operation": "getAll",
         "projectId": "pduf3mguz7mlqwu",
-        "table": "mrq6ijxnn3z7673",
+        "table": "maqwpbytj08220t",
         "returnAll": true,
         "options": {}
       },
@@ -61,7 +61,7 @@
         "authentication": "nocoDbApiToken",
         "operation": "getAll",
         "projectId": "pduf3mguz7mlqwu",
-        "table": "mh009jpegeb8pvl",
+        "table": "mfmynu6vl7zx5jv",
         "returnAll": true,
         "options": {}
       },
@@ -86,7 +86,7 @@
         "authentication": "nocoDbApiToken",
         "operation": "getAll",
         "projectId": "pduf3mguz7mlqwu",
-        "table": "mimqkvsak48uu5k",
+        "table": "mcjn3aagtj5mfxo",
         "returnAll": true,
         "options": {}
       },
@@ -171,7 +171,7 @@
         "authentication": "nocoDbApiToken",
         "operation": "getAll",
         "projectId": "pduf3mguz7mlqwu",
-        "table": "mrq6ijxnn3z7673",
+        "table": "maqwpbytj08220t",
         "returnAll": true,
         "options": {}
       },
@@ -209,7 +209,7 @@
         "authentication": "nocoDbApiToken",
         "operation": "create",
         "projectId": "pduf3mguz7mlqwu",
-        "table": "mrq6ijxnn3z7673",
+        "table": "maqwpbytj08220t",
         "dataToSend": "autoMapInputData"
       },
       "id": "p014",
@@ -292,7 +292,7 @@
         "authentication": "nocoDbApiToken",
         "operation": "update",
         "projectId": "pduf3mguz7mlqwu",
-        "table": "mrq6ijxnn3z7673",
+        "table": "maqwpbytj08220t",
         "dataToSend": "autoMapInputData"
       },
       "id": "p023",
@@ -362,7 +362,7 @@
         "authentication": "nocoDbApiToken",
         "operation": "deleteRecord",
         "projectId": "pduf3mguz7mlqwu",
-        "table": "mrq6ijxnn3z7673",
+        "table": "maqwpbytj08220t",
         "id": "={{ $json.body.id }}"
       },
       "id": "p032",

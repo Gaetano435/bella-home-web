@@ -1,0 +1,210 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bella-pratiche-crea-checklist-default",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "cd001",
+      "name": "Webhook Crea Checklist Default",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "cd00111-1111-1111-1111-111111111111"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
+      },
+      "id": "cd002",
+      "name": "Verificar Auth Checklist Default",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mtwb9x5hvfhx27w",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "cd003",
+      "name": "Leggi Template Default",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        448,
+        300
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "maytiwq9zvps5qf",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "cd004",
+      "name": "Leggi Checklist Esistenti Per Id",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        672,
+        300
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Webhook Crea Checklist Default').first().json.body;\nconst praticaId = Number(input.pratica_id);\nconst template = $('Leggi Template Default').all().map(i => i.json);\nconst esistenti = items.map(i => i.json.id).filter(v => typeof v === 'number');\nlet nextId = esistenti.length ? Math.max(...esistenti) + 1 : 1;\n\nif (!template.length) { return []; }\n\nreturn template.map(t => {\n  const row = {\n    id: nextId,\n    pratica_id: praticaId,\n    nome_punto: t.nome_punto || '',\n    nota: t.nota || '',\n    per_chi: t.per_chi || 'Entrambi',\n    descrizione: '',\n    stato: 'Mancante',\n    file_link: '',\n    origine: 'Template'\n  };\n  nextId++;\n  return { json: row };\n});"
+      },
+      "id": "cd005",
+      "name": "Prepara Voci Da Template",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "create",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "maytiwq9zvps5qf",
+        "dataToSend": "autoMapInputData"
+      },
+      "id": "cd006",
+      "name": "Scrivi Voci Checklist",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        300
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true, \"voci_creadas\": $input.all().length } }}",
+        "options": {}
+      },
+      "id": "cd007",
+      "name": "Rispondi Checklist Default",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        1344,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Crea Checklist Default": {
+      "main": [
+        [
+          {
+            "node": "Verificar Auth Checklist Default",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Auth Checklist Default": {
+      "main": [
+        [
+          {
+            "node": "Leggi Template Default",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leggi Template Default": {
+      "main": [
+        [
+          {
+            "node": "Leggi Checklist Esistenti Per Id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leggi Checklist Esistenti Per Id": {
+      "main": [
+        [
+          {
+            "node": "Prepara Voci Da Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepara Voci Da Template": {
+      "main": [
+        [
+          {
+            "node": "Scrivi Voci Checklist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrivi Voci Checklist": {
+      "main": [
+        [
+          {
+            "node": "Rispondi Checklist Default",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "d991981e85276df5a3ff3ef1e964aff7c9cd7f950b50d4b301d088bd5278a0a4"
+  }
+}

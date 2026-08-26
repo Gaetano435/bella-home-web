@@ -1,0 +1,241 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bella-upload-documento-economico",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "ue001",
+      "name": "Webhook Upload Economico",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "ue00111-1111-1111-1111-111111111111"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth || $json.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado - recibido: ' + JSON.stringify(recibido) + ' | keys en json: ' + JSON.stringify(Object.keys($json)) + ' | keys en body: ' + JSON.stringify(Object.keys(b)));\n}\nreturn [$json];"
+      },
+      "id": "ue002",
+      "name": "Verificar Auth Upload Economico",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "maqwpbytj08220t",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "ue003",
+      "name": "Leggi Pratica",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        448,
+        300
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const CAMPO_MAP = {\n  'reserva_contrato': 'reserva_contrato_file',\n  'reserva_comprobante': 'reserva_comprobante_file',\n  'arras_contrato': 'arras_contrato_file',\n  'arras_comprobante': 'arras_comprobante_file',\n  'traspaso': 'traspaso_comprobante_file'\n};\nconst input = $('Webhook Upload Economico').first().json.body;\nconst praticaId = Number(input.pratica_id);\nconst campo = input.campo;\nconst nomeColonna = CAMPO_MAP[campo];\nif (!nomeColonna) throw new Error('Campo economico non riconosciuto: ' + campo);\nconst pratiche = items.map(i => i.json);\nconst pratica = pratiche.find(p => p.id === praticaId);\nif (!pratica) throw new Error('Pratica non trovata: ' + praticaId);\nconst cartellaId = pratica.cartella_id;\nif (!cartellaId) throw new Error('Esta pratica no tiene carpeta de Drive creada todavia');\nconst webhookItem = $('Webhook Upload Economico').first();\nreturn [{ json: { praticaId, nomeColonna, cartellaId }, binary: webhookItem.binary }];"
+      },
+      "id": "ue004",
+      "name": "Determina Campo E Cartella",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "upload",
+        "name": "={{ $('Webhook Upload Economico').first().binary.data.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $json.cartellaId }}",
+          "mode": "id"
+        },
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "ue005",
+      "name": "Carica File Su Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        896,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "iQA81XBNPFdrmMKs",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const praticaId = $('Determina Campo E Cartella').first().json.praticaId;\nconst nomeColonna = $('Determina Campo E Cartella').first().json.nomeColonna;\nconst file = $json;\nconst link = file.webViewLink || ('https://drive.google.com/file/d/' + file.id + '/view');\nconst out = { id: praticaId };\nout[nomeColonna] = link;\nreturn [{ json: out }];"
+      },
+      "id": "ue006",
+      "name": "Prepara Aggiornamento Pratica",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "update",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "maqwpbytj08220t",
+        "dataToSend": "autoMapInputData"
+      },
+      "id": "ue007",
+      "name": "Aggiorna Pratica Con File",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        1344,
+        300
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "ue008",
+      "name": "Rispondi Upload Economico",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        1568,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Upload Economico": {
+      "main": [
+        [
+          {
+            "node": "Verificar Auth Upload Economico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Auth Upload Economico": {
+      "main": [
+        [
+          {
+            "node": "Leggi Pratica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leggi Pratica": {
+      "main": [
+        [
+          {
+            "node": "Determina Campo E Cartella",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Determina Campo E Cartella": {
+      "main": [
+        [
+          {
+            "node": "Carica File Su Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Carica File Su Drive": {
+      "main": [
+        [
+          {
+            "node": "Prepara Aggiornamento Pratica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepara Aggiornamento Pratica": {
+      "main": [
+        [
+          {
+            "node": "Aggiorna Pratica Con File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggiorna Pratica Con File": {
+      "main": [
+        [
+          {
+            "node": "Rispondi Upload Economico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "d991981e85276df5a3ff3ef1e964aff7c9cd7f950b50d4b301d088bd5278a0a4"
+  }
+}

@@ -36,7 +36,7 @@
         "authentication": "nocoDbApiToken",
         "operation": "getAll",
         "projectId": "pduf3mguz7mlqwu",
-        "table": "mh009jpegeb8pvl",
+        "table": "mfmynu6vl7zx5jv",
         "returnAll": true,
         "options": {}
       },
@@ -122,7 +122,7 @@
         "authentication": "nocoDbApiToken",
         "operation": "getAll",
         "projectId": "pduf3mguz7mlqwu",
-        "table": "mh009jpegeb8pvl",
+        "table": "mfmynu6vl7zx5jv",
         "returnAll": true,
         "options": {}
       },
@@ -160,7 +160,7 @@
         "authentication": "nocoDbApiToken",
         "operation": "create",
         "projectId": "pduf3mguz7mlqwu",
-        "table": "mh009jpegeb8pvl",
+        "table": "mfmynu6vl7zx5jv",
         "dataToSend": "autoMapInputData"
       },
       "id": "64b6b990-738a-4158-8f9f-ec1d94ee07da",
@@ -243,7 +243,7 @@
         "authentication": "nocoDbApiToken",
         "operation": "update",
         "projectId": "pduf3mguz7mlqwu",
-        "table": "mh009jpegeb8pvl",
+        "table": "mfmynu6vl7zx5jv",
         "dataToSend": "autoMapInputData"
       },
       "id": "fdac7b5b-2303-4941-8d04-87a25933605e",
@@ -310,43 +310,6 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $('Webhook Elimina Proprieta').first().json.body;\nreturn [{ json: { id: Number(input.id), stato_annuncio: 'Eliminata' } }];"
-      },
-      "id": "f7d321a2-069f-4dbb-8248-3ac10a3bb2fa",
-      "name": "Prepara Eliminazione Proprieta",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        656,
-        624
-      ]
-    },
-    {
-      "parameters": {
-        "authentication": "nocoDbApiToken",
-        "operation": "update",
-        "projectId": "pduf3mguz7mlqwu",
-        "table": "mh009jpegeb8pvl",
-        "dataToSend": "autoMapInputData"
-      },
-      "id": "6f112a56-7c74-4201-8afb-21df7486a8a7",
-      "name": "Marca Proprieta Eliminata",
-      "type": "n8n-nodes-base.nocoDb",
-      "typeVersion": 3,
-      "position": [
-        880,
-        624
-      ],
-      "credentials": {
-        "nocoDbApiToken": {
-          "id": "Bf3buqD3Mhxjasqc",
-          "name": "NocoDB Token account"
-        }
-      },
-      "alwaysOutputData": true
-    },
-    {
-      "parameters": {
         "respondWith": "json",
         "responseBody": "={{ { \"ok\": true } }}",
         "options": {}
@@ -359,6 +322,30 @@
         1088,
         624
       ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "deleteRecord",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mfmynu6vl7zx5jv",
+        "id": "={{ $json.body.id }}"
+      },
+      "id": "elim-prop-hard-001",
+      "name": "Elimina Proprieta",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        656,
+        624
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      }
     }
   ],
   "connections": {
@@ -520,25 +507,14 @@
       "main": [
         [
           {
-            "node": "Prepara Eliminazione Proprieta",
+            "node": "Elimina Proprieta",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Prepara Eliminazione Proprieta": {
-      "main": [
-        [
-          {
-            "node": "Marca Proprieta Eliminata",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Marca Proprieta Eliminata": {
+    "Elimina Proprieta": {
       "main": [
         [
           {

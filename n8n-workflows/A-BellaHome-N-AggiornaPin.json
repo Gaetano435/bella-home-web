@@ -1,0 +1,138 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bella-pratiche-update-pin",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "pin001",
+      "name": "Webhook Actualizar Pin",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "pin00111-1111-1111-1111-111111111111"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
+      },
+      "id": "pin002",
+      "name": "Verificar Auth Actualizar Pin",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        464,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Webhook Actualizar Pin').first().json.body;\nreturn [{ json: { id: Number(input.id), pin_acceso: input.pin_acceso || '' } }];"
+      },
+      "id": "pin003",
+      "name": "Prepara Actualizacion Pin",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        688,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "update",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "maqwpbytj08220t",
+        "dataToSend": "autoMapInputData"
+      },
+      "id": "pin004",
+      "name": "Actualizar Pin En NocoDB",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        912,
+        300
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true } }}",
+        "options": {}
+      },
+      "id": "pin005",
+      "name": "Rispondi Actualizacion Pin",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        1136,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Actualizar Pin": {
+      "main": [
+        [
+          {
+            "node": "Verificar Auth Actualizar Pin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Auth Actualizar Pin": {
+      "main": [
+        [
+          {
+            "node": "Prepara Actualizacion Pin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepara Actualizacion Pin": {
+      "main": [
+        [
+          {
+            "node": "Actualizar Pin En NocoDB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar Pin En NocoDB": {
+      "main": [
+        [
+          {
+            "node": "Rispondi Actualizacion Pin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "d991981e85276df5a3ff3ef1e964aff7c9cd7f950b50d4b301d088bd5278a0a4"
+  }
+}

@@ -1,0 +1,381 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "path": "bella-template-list",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "t001",
+      "name": "Webhook Lista Template",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        112
+      ],
+      "webhookId": "t0011111-1111-1111-1111-111111111111"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
+      },
+      "id": "t002",
+      "name": "Verificar Auth Lista Template",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mtwb9x5hvfhx27w",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "t003",
+      "name": "Leggi Template",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        400,
+        112
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $input.all().map(i => i.json) }}",
+        "options": {}
+      },
+      "id": "t004",
+      "name": "Rispondi Lista Template",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        624,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bella-template-add",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "t010",
+      "name": "Webhook Aggiungi Template",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        304
+      ],
+      "webhookId": "t0101010-1010-1010-1010-101010101010"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
+      },
+      "id": "t011",
+      "name": "Verificar Auth Aggiungi Template",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mtwb9x5hvfhx27w",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "t012",
+      "name": "Leggi Template Esistenti",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        400,
+        304
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $('Webhook Aggiungi Template').first().json.body;\nconst existing = items.map(i => i.json.id).filter(v => typeof v === 'number');\nconst nextId = existing.length ? Math.max(...existing) + 1 : 1;\nreturn [{ json: {\n  id: nextId,\n  nome_punto: input.nome_punto || '',\n  nota: input.nota || '',\n  per_chi: input.per_chi || ''\n} }];"
+      },
+      "id": "t013",
+      "name": "Prepara Nuovo Template",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "create",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mtwb9x5hvfhx27w",
+        "dataToSend": "autoMapInputData"
+      },
+      "id": "t014",
+      "name": "Scrivi Nuovo Template",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        848,
+        304
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "t015",
+      "name": "Rispondi Aggiunta Template",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        1072,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bella-template-elimina",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "t020",
+      "name": "Webhook Elimina Template",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -48,
+        480
+      ],
+      "webhookId": "t0202020-2020-2020-2020-202020202020"
+    },
+    {
+      "parameters": {
+        "jsCode": "const secreto = 'BellaHome2026!Cvn';\nconst q = $json.query || {};\nconst b = $json.body || {};\nconst recibido = q.bella_auth || b.bella_auth;\nif (recibido !== secreto) {\n  throw new Error('No autorizado');\n}\nreturn [$json];"
+      },
+      "id": "t021",
+      "name": "Verificar Auth Elimina Template",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "deleteRecord",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "mtwb9x5hvfhx27w",
+        "id": "={{ $json.body.id }}"
+      },
+      "id": "t022",
+      "name": "Elimina Template",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        400,
+        480
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true } }}",
+        "options": {}
+      },
+      "id": "t023",
+      "name": "Rispondi Elimina Template",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        624,
+        480
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Lista Template": {
+      "main": [
+        [
+          {
+            "node": "Verificar Auth Lista Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Auth Lista Template": {
+      "main": [
+        [
+          {
+            "node": "Leggi Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leggi Template": {
+      "main": [
+        [
+          {
+            "node": "Rispondi Lista Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Aggiungi Template": {
+      "main": [
+        [
+          {
+            "node": "Verificar Auth Aggiungi Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Auth Aggiungi Template": {
+      "main": [
+        [
+          {
+            "node": "Leggi Template Esistenti",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leggi Template Esistenti": {
+      "main": [
+        [
+          {
+            "node": "Prepara Nuovo Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepara Nuovo Template": {
+      "main": [
+        [
+          {
+            "node": "Scrivi Nuovo Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrivi Nuovo Template": {
+      "main": [
+        [
+          {
+            "node": "Rispondi Aggiunta Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook Elimina Template": {
+      "main": [
+        [
+          {
+            "node": "Verificar Auth Elimina Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Auth Elimina Template": {
+      "main": [
+        [
+          {
+            "node": "Elimina Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Elimina Template": {
+      "main": [
+        [
+          {
+            "node": "Rispondi Elimina Template",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "d991981e85276df5a3ff3ef1e964aff7c9cd7f950b50d4b301d088bd5278a0a4"
+  }
+}

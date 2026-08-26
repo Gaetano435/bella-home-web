@@ -1,0 +1,277 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "bella-upload-documento",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "id": "ud001",
+      "name": "Webhook Upload Documento",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        300
+      ],
+      "webhookId": "ud00111-1111-1111-1111-111111111111"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [$json];"
+      },
+      "id": "ud002",
+      "name": "Verificar Auth Upload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "maytiwq9zvps5qf",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "ud003",
+      "name": "Leggi Voce Checklist",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        448,
+        300
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "getAll",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "maqwpbytj08220t",
+        "returnAll": true,
+        "options": {}
+      },
+      "id": "ud004",
+      "name": "Leggi Pratica Per Cartella",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        672,
+        300
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const SECRET = 'BellaHome2026!Cvn';\nconst input = $('Webhook Upload Documento').first().json.body;\nconst checklistId = Number(input.checklist_id);\nconst voci = $('Leggi Voce Checklist').all().map(i => i.json);\nconst voce = voci.find(v => v.id === checklistId);\nif (!voce) throw new Error('Voce checklist non trovata: ' + checklistId);\nconst pratiche = $('Leggi Pratica Per Cartella').all().map(i => i.json);\nconst pratica = pratiche.find(p => p.id === voce.pratica_id);\nif (!pratica) throw new Error('Pratica non trovata per la voce checklist');\n\nconst autorizzatoGestionale = input.bella_auth === SECRET;\nconst autorizzatoCliente = input.pin && pratica.pin_acceso && String(pratica.pin_acceso) === String(input.pin) && Number(input.pratica_id) === pratica.id;\nif (!autorizzatoGestionale && !autorizzatoCliente) {\n  throw new Error('No autorizado');\n}\n\nlet cartellaId;\nif (voce.per_chi === 'Acquirente') cartellaId = pratica.cartella_acquirente_id;\nelse cartellaId = pratica.cartella_venditore_id;\nif (!cartellaId) cartellaId = pratica.cartella_id;\nif (!cartellaId) throw new Error('Esta pratica no tiene carpetas de Drive creadas todavia');\n\nconst webhookItem = $('Webhook Upload Documento').first();\nreturn [{ json: { checklistId, cartellaId }, binary: webhookItem.binary }];"
+      },
+      "id": "ud005",
+      "name": "Determina Cartella Destinazione",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "operation": "upload",
+        "name": "={{ $('Webhook Upload Documento').first().binary.data.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $json.cartellaId }}",
+          "mode": "id"
+        },
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "id": "ud006",
+      "name": "Carica File Su Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        300
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "iQA81XBNPFdrmMKs",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const checklistId = $('Determina Cartella Destinazione').first().json.checklistId;\nconst file = $json;\nconst link = file.webViewLink || ('https://drive.google.com/file/d/' + file.id + '/view');\nreturn [{ json: { id: checklistId, file_link: link, stato: 'Caricato' } }];"
+      },
+      "id": "ud007",
+      "name": "Prepara Aggiornamento Voce",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1344,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "nocoDbApiToken",
+        "operation": "update",
+        "projectId": "pduf3mguz7mlqwu",
+        "table": "maytiwq9zvps5qf",
+        "dataToSend": "autoMapInputData"
+      },
+      "id": "ud008",
+      "name": "Aggiorna Voce Checklist",
+      "type": "n8n-nodes-base.nocoDb",
+      "typeVersion": 3,
+      "position": [
+        1568,
+        300
+      ],
+      "credentials": {
+        "nocoDbApiToken": {
+          "id": "Bf3buqD3Mhxjasqc",
+          "name": "NocoDB Token account"
+        }
+      },
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "ud009",
+      "name": "Rispondi Upload",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.2,
+      "position": [
+        1792,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Upload Documento": {
+      "main": [
+        [
+          {
+            "node": "Verificar Auth Upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Auth Upload": {
+      "main": [
+        [
+          {
+            "node": "Leggi Voce Checklist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leggi Voce Checklist": {
+      "main": [
+        [
+          {
+            "node": "Leggi Pratica Per Cartella",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leggi Pratica Per Cartella": {
+      "main": [
+        [
+          {
+            "node": "Determina Cartella Destinazione",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Determina Cartella Destinazione": {
+      "main": [
+        [
+          {
+            "node": "Carica File Su Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Carica File Su Drive": {
+      "main": [
+        [
+          {
+            "node": "Prepara Aggiornamento Voce",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepara Aggiornamento Voce": {
+      "main": [
+        [
+          {
+            "node": "Aggiorna Voce Checklist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggiorna Voce Checklist": {
+      "main": [
+        [
+          {
+            "node": "Rispondi Upload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "d991981e85276df5a3ff3ef1e964aff7c9cd7f950b50d4b301d088bd5278a0a4"
+  }
+}
